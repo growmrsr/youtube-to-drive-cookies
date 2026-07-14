@@ -51,14 +51,14 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure yt-dlp parameters with updated 403 client engine bypass
+                # 2. Configure yt-dlp parameters to completely strip out the DRM-bugged TV client
                 ydl_opts = {
                     'format': 'best[ext=mp4]/best',
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
                     'extractor_args': {
                         'youtube': {
-                            'player_client': ['web_embedded', 'web', 'tv']
+                            'player_client': ['web_embedded', 'web_safari', 'ios']
                         }
                     }
                 }
