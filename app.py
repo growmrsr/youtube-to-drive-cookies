@@ -8,7 +8,7 @@ from googleapiclient.http import MediaFileUpload
 # Target Google Drive Folder ID
 FOLDER_ID = "1irOJjYYCQPFDRWaEXjfl052d-Rpa2kGf"
 
-# --- Custom X-Ray Logger to catch hidden YouTube blocks ---
+# --- Custom Logger to catch hidden errors ---
 class MyLogger(object):
     def __init__(self):
         self.logs = []
@@ -55,24 +55,32 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
         COOKIE_PATH = "runtime_cookies.txt"
         yt_logger = MyLogger()
         
-        with st.spinner("Authenticating and running deep diagnostics..."):
+        with st.spinner("Authenticating via Android API and downloading..."):
             try:
                 # 1. Write cookies text from secrets to a temporary runtime file
                 if "youtube_cookies" in st.secrets:
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure Diagnostic parameters
+                # 2. Configure Android-Only parameters
                 ydl_opts = {
-                    'format': 'best',             # Forces a pre-merged file to rule out FFmpeg issues completely
+                    'format': 'best',
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
-                    'geo_bypass': True,           # Attempts to fix the Cookie Timezone vs Server IP location mismatch
-                    'logger': yt_logger,          # Catches the hidden YouTube security warnings
+                    'logger': yt_logger,
                     'extractor_args': {
                         'youtube': {
-                            'player_client': ['web', 'android', 'ios'] 
+                            # Force Android client to bypass JS ciphers and support cookies
+                            'player_client': ['android'] 
                         }
+                    },
+                    'http_headers': {
+                        # Spoof an Android device to match the requested client API
+                        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Origin': 'https://www.youtube.com',
+                        'Referer': 'https://www.youtube.com/',
                     }
                 }
                 
@@ -99,8 +107,8 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
                     
             except Exception as e:
                 st.error(f"Execution Error: {str(e)}")
-                # This will print the secret YouTube warnings on the screen!
-                st.warning("🔍 **Deep Diagnostic Logs Found:**")
+                # Prints hidden logs if it crashes again
+                st.warning("🔍 **Diagnostic Logs:**")
                 for log in yt_logger.logs:
                     st.code(log)
             finally:
