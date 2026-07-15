@@ -44,18 +44,20 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
     if video_url:
         COOKIE_PATH = "runtime_cookies.txt"
         
-        with st.spinner("Downloading stream via secure cookie passport..."):
+        with st.spinner("Downloading stream via secure cookie passport and resolving JS challenges..."):
             try:
                 # 1. Write cookies text from secrets to a temporary runtime file
                 if "youtube_cookies" in st.secrets:
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure bulletproof parameters using the absolute 'best' pre-merged stream
+                # 2. Configure bulletproof parameters with Remote JS Challenge Solvers
                 ydl_opts = {
-                    'format': 'best',              # Guarantees a format match on 100% of videos
+                    'format': 'bestvideo+bestaudio/best',  # Restores highest possible HD quality streams
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
+                    'merge_output_format': 'mp4',          # Merges separate streams into a single MP4
+                    'remote_components': 'ejs:github',    # Fetches the required cipher challenge solver script
                     'http_headers': {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
