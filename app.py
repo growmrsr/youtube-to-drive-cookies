@@ -51,17 +51,12 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure comprehensive yt-dlp parameters with all 403, DRM, and FFmpeg stitching fixes
+                # 2. Configure universal parameters (Removes rigid formatting limits & relies on client rotation)
                 ydl_opts = {
-                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                    'format': 'bestvideo+bestaudio/best',  # Grabs absolute highest quality available (WebM or MP4)
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
-                    'merge_output_format': 'mp4',  # Forces FFmpeg to stitch video and audio into a standard MP4
-                    'extractor_args': {
-                        'youtube': {
-                            'player_client': ['web', 'ios']  # Sidesteps TV client DRM bugs and mobile bot walls
-                        }
-                    },
+                    'merge_output_format': 'mp4',          # FFmpeg automatically transmuxes the final asset into a perfect MP4
                     'http_headers': {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
