@@ -8,6 +8,17 @@ from googleapiclient.http import MediaFileUpload
 # Target Google Drive Folder ID
 FOLDER_ID = "1irOJjYYCQPFDRWaEXjfl052d-Rpa2kGf"
 
+# --- Custom X-Ray Logger to catch hidden YouTube blocks ---
+class MyLogger(object):
+    def __init__(self):
+        self.logs = []
+    def debug(self, msg):
+        pass
+    def warning(self, msg):
+        self.logs.append(msg)
+    def error(self, msg):
+        self.logs.append(msg)
+
 def get_drive_service():
     """Authenticates with Google Drive using secrets."""
     oauth_info = st.secrets["gcp_oauth"]
@@ -34,42 +45,34 @@ st.set_page_config(page_title="Cookie Downloader", page_icon="🍪", layout="cen
 st.title("🍪 Dedicated Cookie Downloader")
 st.write("Logged-in cloud pipeline. Paste a YouTube link to upload it directly to Google Drive.")
 
-# Check if cookies are set up in the secrets panel
 if "youtube_cookies" not in st.secrets:
-    st.warning("⚠️ YouTube cookies are missing from your Streamlit Secrets configuration. The app might face 403 blocks.")
+    st.warning("⚠️ YouTube cookies are missing from your Streamlit Secrets configuration.")
 
 video_url = st.text_input("Enter YouTube Video URL:", placeholder="https://www.youtube.com/watch?v=...")
 
 if st.button("🚀 Run Cloud Download", use_container_width=True):
     if video_url:
         COOKIE_PATH = "runtime_cookies.txt"
+        yt_logger = MyLogger()
         
-        with st.spinner("Authenticating via mobile API and stitching stream..."):
+        with st.spinner("Authenticating and running deep diagnostics..."):
             try:
                 # 1. Write cookies text from secrets to a temporary runtime file
                 if "youtube_cookies" in st.secrets:
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure target parameters for Mobile-Only API (Bypasses JS Ciphers & DRM)
+                # 2. Configure Diagnostic parameters
                 ydl_opts = {
-                    'format': 'bestvideo+bestaudio/best',  
+                    'format': 'best',             # Forces a pre-merged file to rule out FFmpeg issues completely
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
-                    'merge_output_format': 'mp4',
+                    'geo_bypass': True,           # Attempts to fix the Cookie Timezone vs Server IP location mismatch
+                    'logger': yt_logger,          # Catches the hidden YouTube security warnings
                     'extractor_args': {
                         'youtube': {
-                            # Strictly limits to mobile APIs to completely skip JavaScript verification
-                            'player_client': ['ios', 'android'] 
+                            'player_client': ['web', 'android', 'ios'] 
                         }
-                    },
-                    'http_headers': {
-                        # Spoofs a real iPhone to match the 'ios' player client request
-                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.9',
-                        'Origin': 'https://www.youtube.com',
-                        'Referer': 'https://www.youtube.com/',
                     }
                 }
                 
@@ -96,6 +99,10 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
                     
             except Exception as e:
                 st.error(f"Execution Error: {str(e)}")
+                # This will print the secret YouTube warnings on the screen!
+                st.warning("🔍 **Deep Diagnostic Logs Found:**")
+                for log in yt_logger.logs:
+                    st.code(log)
             finally:
                 # Clean up cookie footprints from the container runtime
                 if os.path.exists(COOKIE_PATH):
