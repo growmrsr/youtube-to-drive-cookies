@@ -55,30 +55,30 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
         COOKIE_PATH = "runtime_cookies.txt"
         yt_logger = MyLogger()
         
-        with st.spinner("Authenticating via Android API and downloading..."):
+        with st.spinner("Solving JavaScript ciphers and downloading..."):
             try:
                 # 1. Write cookies text from secrets to a temporary runtime file
                 if "youtube_cookies" in st.secrets:
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure Android-Only parameters
+                # 2. Configure Web-Only parameters to accept cookies and utilize Node.js
                 ydl_opts = {
-                    'format': 'best',
+                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best',
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
+                    'merge_output_format': 'mp4',
                     'logger': yt_logger,
                     'extractor_args': {
                         'youtube': {
-                            # Force Android client to bypass JS ciphers and support cookies
-                            'player_client': ['android'] 
+                            # Must use web clients because mobile clients reject cookies entirely
+                            'player_client': ['web', 'mweb'] 
                         }
                     },
                     'http_headers': {
-                        # Spoof an Android device to match the requested client API
-                        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.9',
+                        'Accept-Language': 'en-US,en;q=0.5',
                         'Origin': 'https://www.youtube.com',
                         'Referer': 'https://www.youtube.com/',
                     }
@@ -107,7 +107,6 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
                     
             except Exception as e:
                 st.error(f"Execution Error: {str(e)}")
-                # Prints hidden logs if it crashes again
                 st.warning("🔍 **Diagnostic Logs:**")
                 for log in yt_logger.logs:
                     st.code(log)
