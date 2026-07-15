@@ -44,29 +44,30 @@ if st.button("🚀 Run Cloud Download", use_container_width=True):
     if video_url:
         COOKIE_PATH = "runtime_cookies.txt"
         
-        with st.spinner("Downloading stream via secure cookie passport and stitching formats..."):
+        with st.spinner("Authenticating via mobile API and stitching stream..."):
             try:
                 # 1. Write cookies text from secrets to a temporary runtime file
                 if "youtube_cookies" in st.secrets:
                     with open(COOKIE_PATH, "w", encoding="utf-8") as f:
                         f.write(st.secrets["youtube_cookies"])
 
-                # 2. Configure robust parameters relying on system FFmpeg
+                # 2. Configure target parameters for Mobile-Only API (Bypasses JS Ciphers & DRM)
                 ydl_opts = {
-                    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best',  
+                    'format': 'bestvideo+bestaudio/best',  
                     'outtmpl': 'cloud_target.%(ext)s',
                     'noplaylist': True,
                     'merge_output_format': 'mp4',
-                    'remote_components': 'ejs:github',
                     'extractor_args': {
                         'youtube': {
-                            'player_client': ['web', 'ios', 'tv'] # Broadest format availability
+                            # Strictly limits to mobile APIs to completely skip JavaScript verification
+                            'player_client': ['ios', 'android'] 
                         }
                     },
                     'http_headers': {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        # Spoofs a real iPhone to match the 'ios' player client request
+                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Accept-Language': 'en-US,en;q=0.9',
                         'Origin': 'https://www.youtube.com',
                         'Referer': 'https://www.youtube.com/',
                     }
