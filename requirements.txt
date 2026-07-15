@@ -1,4 +1,5 @@
 streamlit
 git+https://github.com/yt-dlp/yt-dlp.git
+yt-dlp-ejs
 google-api-python-client
 google-auth-oauthlib
